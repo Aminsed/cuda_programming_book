@@ -54,7 +54,7 @@ int main() {
         // Essential Information
         fprintf(fp, "%-*s %d.%d\n", LABEL_WIDTH, "CUDA Capability Major/Minor version number:", deviceProp.major, deviceProp.minor);
         fprintf(fp, "%-*s %.2f GB\n", LABEL_WIDTH, "Total Global Memory:", (double)deviceProp.totalGlobalMem / (1024 * 1024 * 1024));
-        fprintf(fp, "%-*s %d\n", LABEL_WIDTH, "Multiprocessors:", smCount);
+        fprintf(fp, "%-*s %d\n", LABEL_WIDTH, "Streaming Multiprocessor (SM count):", smCount);
 
         if (tensorCores > 0) {
             fprintf(fp, "%-*s %d (Estimated)\n", LABEL_WIDTH, "Total Tensor Cores:", tensorCores);
