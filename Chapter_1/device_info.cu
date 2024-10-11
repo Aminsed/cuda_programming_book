@@ -1,9 +1,9 @@
 #include <stdio.h>
+#include <stdarg.h>
 #include <cuda_runtime.h>
 
 #define LABEL_WIDTH 45
 
-// Helper function to estimate the number of Tensor Cores
 int EstimateTensorCores(int major, int minor, int smCount) {
     int tensorCoresPerSM = 0;
 
@@ -23,6 +23,18 @@ int EstimateTensorCores(int major, int minor, int smCount) {
     return totalTensorCores;
 }
 
+void PrintBoth(FILE* fp, const char* format, ...) {
+    va_list args1;
+    va_start(args1, format);
+    vfprintf(fp, format, args1);
+    va_end(args1);
+
+    va_list args2;
+    va_start(args2, format);
+    vprintf(format, args2);
+    va_end(args2);
+}
+
 int main() {
     int deviceCount = 0;
     cudaError_t err = cudaGetDeviceCount(&deviceCount);
@@ -38,7 +50,7 @@ int main() {
         return -1;
     }
 
-    fprintf(fp, "Number of CUDA devices: %d\n\n", deviceCount);
+    PrintBoth(fp, "Number of CUDA devices: %d\n\n", deviceCount);
 
     for (int i = 0; i < deviceCount; ++i) {
         cudaDeviceProp deviceProp;
@@ -47,39 +59,36 @@ int main() {
         int smCount = deviceProp.multiProcessorCount;
         int tensorCores = EstimateTensorCores(deviceProp.major, deviceProp.minor, smCount);
 
-        fprintf(fp, "=============================================================\n");
-        fprintf(fp, "Device %d: %s\n", i, deviceProp.name);
-        fprintf(fp, "=============================================================\n\n");
+        PrintBoth(fp, "=============================================================\n");
+        PrintBoth(fp, "Device %d: %s\n", i, deviceProp.name);
+        PrintBoth(fp, "=============================================================\n\n");
 
-        // Essential Information
-        fprintf(fp, "%-*s %d.%d\n", LABEL_WIDTH, "CUDA Capability Major/Minor version number:", deviceProp.major, deviceProp.minor);
-        fprintf(fp, "%-*s %.2f GB\n", LABEL_WIDTH, "Total Global Memory:", (double)deviceProp.totalGlobalMem / (1024 * 1024 * 1024));
-        fprintf(fp, "%-*s %d\n", LABEL_WIDTH, "Streaming Multiprocessor (SM count):", smCount);
+        PrintBoth(fp, "%-*s %d.%d\n", LABEL_WIDTH, "CUDA Capability Major/Minor version number:", deviceProp.major, deviceProp.minor);
+        PrintBoth(fp, "%-*s %.2f GB\n", LABEL_WIDTH, "Total Global Memory:", (double)deviceProp.totalGlobalMem / (1024 * 1024 * 1024));
+        PrintBoth(fp, "%-*s %d\n", LABEL_WIDTH, "Streaming Multiprocessor (SM count):", smCount);
 
         if (tensorCores > 0) {
-            fprintf(fp, "%-*s %d (Estimated)\n", LABEL_WIDTH, "Total Tensor Cores:", tensorCores);
+            PrintBoth(fp, "%-*s %d (Estimated)\n", LABEL_WIDTH, "Total Tensor Cores:", tensorCores);
         } else {
-            fprintf(fp, "%-*s %s\n", LABEL_WIDTH, "Total Tensor Cores:", "Not Available");
+            PrintBoth(fp, "%-*s %s\n", LABEL_WIDTH, "Total Tensor Cores:", "Not Available");
         }
 
-        fprintf(fp, "%-*s %d\n", LABEL_WIDTH, "Max Threads per Block:", deviceProp.maxThreadsPerBlock);
-        fprintf(fp, "%-*s %d\n", LABEL_WIDTH, "Max Threads per Multiprocessor:", deviceProp.maxThreadsPerMultiProcessor);
-        fprintf(fp, "%-*s %zu bytes\n", LABEL_WIDTH, "Max Shared Memory per Block:", deviceProp.sharedMemPerBlock);
-        fprintf(fp, "%-*s %zu bytes\n", LABEL_WIDTH, "Max Shared Memory per Multiprocessor:", deviceProp.sharedMemPerMultiprocessor);
+        PrintBoth(fp, "%-*s %d\n", LABEL_WIDTH, "Max Threads per Block:", deviceProp.maxThreadsPerBlock);
+        PrintBoth(fp, "%-*s %d\n", LABEL_WIDTH, "Max Threads per Multiprocessor:", deviceProp.maxThreadsPerMultiProcessor);
+        PrintBoth(fp, "%-*s %zu bytes\n", LABEL_WIDTH, "Max Shared Memory per Block:", deviceProp.sharedMemPerBlock);
+        PrintBoth(fp, "%-*s %zu bytes\n", LABEL_WIDTH, "Max Shared Memory per Multiprocessor:", deviceProp.sharedMemPerMultiprocessor);
 
-        // Example Compilation Command
-        fprintf(fp, "\nExample Compilation Command:\n");
-        fprintf(fp, "  nvcc -arch=sm_%d%d -o example example.cu\n", deviceProp.major, deviceProp.minor);
+        PrintBoth(fp, "\nExample Compilation Command:\n");
+        PrintBoth(fp, "  nvcc -arch=sm_%d%d -o example example.cu\n", deviceProp.major, deviceProp.minor);
 
-        // Additional Information (Keep or Remove based on book's focus)
-        fprintf(fp, "\nAdditional Device Information:\n");
-        fprintf(fp, "%-*s %d bytes\n", LABEL_WIDTH, "L2 Cache Size:", deviceProp.l2CacheSize);
-        fprintf(fp, "%-*s %zu bytes\n", LABEL_WIDTH, "Total Constant Memory:", deviceProp.totalConstMem);
-        fprintf(fp, "%-*s %d\n", LABEL_WIDTH, "Registers per Block:", deviceProp.regsPerBlock);
-        fprintf(fp, "%-*s %s\n", LABEL_WIDTH, "Managed Memory:", deviceProp.managedMemory ? "Yes" : "No");
-        fprintf(fp, "%-*s %d\n", LABEL_WIDTH, "Concurrent Kernels:", deviceProp.concurrentKernels);
+        PrintBoth(fp, "\nAdditional Device Information:\n");
+        PrintBoth(fp, "%-*s %d bytes\n", LABEL_WIDTH, "L2 Cache Size:", deviceProp.l2CacheSize);
+        PrintBoth(fp, "%-*s %zu bytes\n", LABEL_WIDTH, "Total Constant Memory:", deviceProp.totalConstMem);
+        PrintBoth(fp, "%-*s %d\n", LABEL_WIDTH, "Registers per Block:", deviceProp.regsPerBlock);
+        PrintBoth(fp, "%-*s %s\n", LABEL_WIDTH, "Managed Memory:", deviceProp.managedMemory ? "Yes" : "No");
+        PrintBoth(fp, "%-*s %d\n", LABEL_WIDTH, "Concurrent Kernels:", deviceProp.concurrentKernels);
 
-        fprintf(fp, "\n");
+        PrintBoth(fp, "\n");
     }
 
     fclose(fp);
