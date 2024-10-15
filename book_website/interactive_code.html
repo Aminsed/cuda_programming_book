@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Add necessary meta tags and scripts -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Code Tutorial with Line Numbers and Smooth Animations</title>
+    <!-- React and Babel -->
+    <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Additional Styles */
+        .prose { max-width: 65ch; }
+        .prose-invert { color: #e5e7eb; }
+        /* Hide scrollbar for WebKit browsers */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        /* Hide scrollbar for IE, Edge and Firefox */
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        /* Animated Progress Bar */
+        @keyframes gradient-animation {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
+        }
+        .animated-progress-bar {
+            background: linear-gradient(270deg, #4ade80, #60a5fa, #a78bfa);
+            background-size: 200% 200%;
+            animation: gradient-animation 4s ease infinite;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // Button Component
+        const Button = React.forwardRef(({ className, ...props }, ref) => {
+            return (
+                <button
+                    className={`inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background ${className}`}
+                    ref={ref}
+                    {...props}
+                />
+            );
+        });
+
+        // Card Component
+        const Card = React.forwardRef(({ className, ...props }, ref) => (
+            <div
+                ref={ref}
+                className={`rounded-lg border bg-card text-card-foreground shadow-sm ${className}`}
+                {...props}
+            />
+        ));
+
+        // Switch Component (for Dark Mode Toggle)
+        const Switch = React.forwardRef(({ checked, onCheckedChange, ...props }, ref) => (
+            <button
+                ref={ref}
+                role="switch"
+                aria-checked={checked}
+                data-state={checked ? "checked" : "unchecked"}
+                onClick={() => onCheckedChange(!checked)}
+                className={`peer inline-flex h-[24px] w-[44px] shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-500 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 ${checked ? 'bg-primary' : 'bg-input'}`}
+                {...props}
+            >
+                <span className={`pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform duration-500 ease-in-out ${checked ? 'translate-x-5' : 'translate-x-0'}`} />
+            </button>
+        ));
+
+        // ProgressBar Component
+        const ProgressBar = ({ percentage }) => (
+            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 mb-4 overflow-hidden">
+                <div
+                    className="h-4 rounded-full transition-all duration-500 ease-in-out animated-progress-bar"
+                    style={{ width: `${percentage}%` }}
+                ></div>
+            </div>
+        );
+
+        // CodeTutorial Component
+        const CodeTutorial = ({ fullCode, tutorialSteps }) => {
+            const [currentStep, setCurrentStep] = React.useState(0);
+            const [isExplanationVisible, setIsExplanationVisible] = React.useState(true);
+            const [darkMode, setDarkMode] = React.useState(false);
+            const codeRef = React.useRef(null);
+            const explanationRef = React.useRef(null);
+
+            const animationDuration = 500; // Duration in milliseconds
+
+            const totalSteps = tutorialSteps.length;
+            const progressPercentage = ((currentStep + 1) / totalSteps) * 100;
+
+            const nextStep = () => {
+                if (currentStep < tutorialSteps.length - 1) {
+                    setIsExplanationVisible(false);
+                    setTimeout(() => {
+                        setCurrentStep(prevStep => prevStep + 1);
+                        setIsExplanationVisible(true);
+                    }, animationDuration);
+                }
+            };
+
+            const prevStep = () => {
+                if (currentStep > 0) {
+                    setIsExplanationVisible(false);
+                    setTimeout(() => {
+                        setCurrentStep(prevStep => prevStep - 1);
+                        setIsExplanationVisible(true);
+                    }, animationDuration);
+                }
+            };
+
+            React.useEffect(() => {
+                setIsExplanationVisible(true);
+                if (codeRef.current) {
+                    const highlightedLine = codeRef.current.querySelector('.highlighted');
+                    if (highlightedLine) {
+                        highlightedLine.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }
+                if (explanationRef.current) {
+                    explanationRef.current.scrollTop = 0;
+                }
+            }, [currentStep]);
+
+            const renderCodeLine = (line, lineIndex) => {
+                const currentHighlight = tutorialSteps[currentStep].highlightLines[lineIndex];
+
+                // Line number to display
+                const lineNumber = lineIndex + 1;
+
+                if (!currentHighlight) {
+                    return (
+                        <div key={lineIndex} className="flex">
+                            <span className="inline-block w-8 pr-2 text-right text-gray-500 dark:text-gray-400 select-none">
+                                {lineNumber}
+                            </span>
+                            <code className="flex-1 block transition-colors duration-500 ease-in-out whitespace-pre-wrap">
+                                {line}
+                            </code>
+                        </div>
+                    );
+                }
+
+                const { start, end } = currentHighlight;
+                const before = line.slice(0, start);
+                const highlighted = line.slice(start, end);
+                const after = line.slice(end);
+
+                return (
+                    <div key={lineIndex} className="flex">
+                        <span className="inline-block w-8 pr-2 text-right text-gray-500 dark:text-gray-400 select-none">
+                            {lineNumber}
+                        </span>
+                        <code className="flex-1 block transition-colors duration-500 ease-in-out whitespace-pre-wrap">
+                            {before}
+                            <span
+                                className={`inline-block px-1 rounded ${
+                                    darkMode
+                                        ? 'bg-yellow-700 text-gray-100'
+                                        : 'bg-yellow-300 text-gray-900'
+                                } shadow-[0_2px_0_rgba(0,0,0,0.2)] transition-all duration-500 ease-in-out transform hover:translate-y-[-2px] hover:shadow-[0_4px_0_rgba(0,0,0,0.2)]`}
+                            >
+                                {highlighted}
+                            </span>
+                            {after}
+                        </code>
+                    </div>
+                );
+            };
+
+            const toggleDarkMode = () => {
+                setDarkMode(!darkMode);
+            };
+
+            return (
+                <div
+                    className={`flex flex-col lg:flex-row w-full h-screen ${
+                        darkMode
+                            ? 'bg-gray-900 text-gray-100'
+                            : 'bg-gradient-to-br from-gray-100 to-gray-200'
+                    } p-4 transition-colors duration-500 ease-in-out`}
+                >
+                    {/* Dark Mode Toggle */}
+                    <div className="fixed top-4 right-4 flex items-center space-x-2 z-10">
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="h-4 w-4"
+                        >
+                            <circle cx="12" cy="12" r="5" />
+                            <line x1="12" y1="1" x2="12" y2="3" />
+                            <line x1="12" y1="21" x2="12" y2="23" />
+                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                            <line x1="1" y1="12" x2="3" y2="12" />
+                            <line x1="21" y1="12" x2="23" y2="12" />
+                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                        </svg>
+                        <Switch checked={darkMode} onCheckedChange={toggleDarkMode} />
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="h-4 w-4"
+                        >
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                        </svg>
+                    </div>
+
+                    {/* Code Section */}
+                    <div className="w-full lg:w-1/2 h-1/2 lg:h-full p-4 order-2 lg:order-1">
+                        <Card
+                            className={`h-full overflow-hidden ${
+                                darkMode
+                                    ? 'bg-gray-800 text-gray-100'
+                                    : 'bg-gray-900 text-white'
+                            } p-4 shadow-lg rounded-lg transition-colors duration-500 ease-in-out`}
+                        >
+                            <pre
+                                ref={codeRef}
+                                className="font-mono text-sm h-full overflow-auto no-scrollbar"
+                            >
+                                {fullCode.map((line, index) => (
+                                    <div
+                                        key={index}
+                                        className={`p-1 rounded transition-colors duration-500 ease-in-out ${
+                                            tutorialSteps[currentStep].highlightLines[index]
+                                                ? darkMode
+                                                    ? 'bg-yellow-700 bg-opacity-20 text-yellow-300 highlighted'
+                                                    : 'bg-yellow-500 bg-opacity-20 text-yellow-700 highlighted'
+                                                : ''
+                                        }`}
+                                    >
+                                        {renderCodeLine(line, index)}
+                                    </div>
+                                ))}
+                            </pre>
+                        </Card>
+                    </div>
+
+                    {/* Explanation Section */}
+                    <div className="w-full lg:w-1/2 h-1/2 lg:h-full p-4 order-1 lg:order-2">
+                        <Card
+                            className={`h-full overflow-hidden ${
+                                darkMode
+                                    ? 'bg-gray-800 text-gray-100'
+                                    : 'bg-white text-gray-900'
+                            } p-6 shadow-lg rounded-lg transition-opacity duration-500 ease-in-out ${
+                                isExplanationVisible ? 'opacity-100' : 'opacity-0'
+                            }`}
+                        >
+                            {/* Progress Bar */}
+                            <ProgressBar percentage={progressPercentage} />
+
+                            {/* Explanation Content */}
+                            <div
+                                ref={explanationRef}
+                                className={`prose ${
+                                    darkMode ? 'prose-invert' : ''
+                                } max-w-none h-full overflow-auto`}
+                            >
+                                <h2
+                                    className={`text-2xl font-bold mb-4 ${
+                                        darkMode
+                                            ? 'text-indigo-300 border-indigo-700'
+                                            : 'text-indigo-600 border-indigo-200'
+                                    } border-b-2 pb-2 sticky top-0 ${
+                                        darkMode ? 'bg-gray-800' : 'bg-white'
+                                    }`}
+                                >
+                                    {tutorialSteps[currentStep].title}
+                                </h2>
+                                <div
+                                    dangerouslySetInnerHTML={{
+                                        __html: tutorialSteps[currentStep].explanation,
+                                    }}
+                                />
+                            </div>
+                        </Card>
+                    </div>
+
+                    {/* Navigation Buttons */}
+                    <div className="fixed bottom-4 right-4 flex space-x-2 order-3">
+                        <Button
+                            onClick={prevStep}
+                            disabled={currentStep === 0}
+                            className={`px-4 py-2 rounded-md font-medium ${
+                                currentStep === 0
+                                    ? 'cursor-not-allowed opacity-50'
+                                    : 'hover:bg-indigo-500 hover:text-white'
+                            } transition-all duration-500 ease-in-out ${
+                                darkMode ? 'bg-gray-700 text-gray-300' : 'bg-white text-gray-800'
+                            }`}
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="mr-2 h-4 w-4"
+                            >
+                                <polyline points="15 18 9 12 15 6"></polyline>
+                            </svg>
+                            Previous
+                        </Button>
+                        <Button
+                            onClick={nextStep}
+                            disabled={currentStep === tutorialSteps.length - 1}
+                            className={`px-4 py-2 rounded-md font-medium ${
+                                currentStep === tutorialSteps.length - 1
+                                    ? 'cursor-not-allowed opacity-50'
+                                    : 'hover:bg-indigo-500 hover:text-white'
+                            } transition-all duration-500 ease-in-out ${
+                                darkMode ? 'bg-gray-700 text-gray-300' : 'bg-white text-gray-800'
+                            }`}
+                        >
+                            Next
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="ml-2 h-4 w-4"
+                            >
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                        </Button>
+                    </div>
+                </div>
+            );
+        };
+
+        // Example usage with complete tutorial steps
+        const fullCode = [
+            '#include <iostream>',
+            '#include <vector>',
+            '#include <algorithm>',
+            '',
+            'int main() {',
+            '    std::vector<int> numbers = {5, 2, 8, 1, 9, 3, 7, 6, 4};',
+            '',
+            '    // Print original vector',
+            '    std::cout << "Original vector: ";',
+            '    for (int num : numbers) {',
+            '        std::cout << num << " ";',
+            '    }',
+            '    std::cout << std::endl;',
+            '',
+            '    // Sort the vector',
+            '    std::sort(numbers.begin(), numbers.end());',
+            '',
+            '    // Print sorted vector',
+            '    std::cout << "Sorted vector: ";',
+            '    for (int num : numbers) {',
+            '        std::cout << num << " ";',
+            '    }',
+            '    std::cout << std::endl;',
+            '',
+            '    return 0;',
+            '}'
+        ];
+
+        const tutorialSteps = [
+            {
+                title: "Including Necessary Libraries",
+                highlightLines: {
+                    0: { start: 0, end: 18 },
+                    1: { start: 0, end: 18 },
+                    2: { start: 0, end: 22 }
+                },
+                explanation: `
+                <p class="mb-4">We start by including the necessary C++ libraries:</p>
+                <ul class="list-disc list-inside mb-4">
+                    <li><code class="bg-gray-100 dark:bg-gray-700 p-1 rounded text-indigo-600 dark:text-indigo-300">iostream</code> for input/output operations</li>
+                    <li><code class="bg-gray-100 dark:bg-gray-700 p-1 rounded text-indigo-600 dark:text-indigo-300">vector</code> to use the vector container</li>
+                    <li><code class="bg-gray-100 dark:bg-gray-700 p-1 rounded text-indigo-600 dark:text-indigo-300">algorithm</code> for the sort function</li>
+                </ul>
+                <div class="bg-indigo-50 dark:bg-indigo-900 border-l-4 border-indigo-500 text-indigo-700 dark:text-indigo-200 p-4 mb-4">
+                    <p class="font-bold">Pro Tip:</p>
+                    <p>Always include only the libraries you need to keep your program efficient.</p>
+                </div>`
+            },
+            {
+                title: "Creating and Initializing a Vector",
+                highlightLines: {
+                    5: { start: 4, end: 61 }
+                },
+                explanation: `
+                <p class="mb-4">Here we create a vector of integers and initialize it with some values:</p>
+                <pre class="bg-gray-100 dark:bg-gray-700 p-4 rounded mb-4"><code>std::vector<int> numbers = {5, 2, 8, 1, 9, 3, 7, 6, 4};</code></pre>
+                <p class="mb-4">This line does the following:</p>
+                <ul class="list-disc list-inside mb-4">
+                    <li>Declares a vector named <code class="bg-gray-100 dark:bg-gray-700 p-1 rounded text-indigo-600 dark:text-indigo-300">numbers</code></li>
+                    <li>Specifies that it will hold integers (<code class="bg-gray-100 dark:bg-gray-700 p-1 rounded text-indigo-600 dark:text-indigo-300">int</code>)</li>
+                    <li>Initializes it with a list of values using curly braces <code class="bg-gray-100 dark:bg-gray-700 p-1 rounded text-indigo-600 dark:text-indigo-300">{}</code></li>
+                </ul>
+                <div class="bg-indigo-50 dark:bg-indigo-900 border-l-4 border-indigo-500 text-indigo-700 dark:text-indigo-200 p-4">
+                    <p class="font-bold">Note:</p>
+                    <p>Vectors in C++ are dynamic arrays that can grow or shrink in size.</p>
+                </div>`
+            },
+            // ... Include the rest of your tutorial steps here ...
+            // Ensure all steps are included in the tutorialSteps array
+        ];
+
+        ReactDOM.render(
+            <CodeTutorial fullCode={fullCode} tutorialSteps={tutorialSteps} />,
+            document.getElementById('root')
+        );
+    </script>
+</body>
+</html>

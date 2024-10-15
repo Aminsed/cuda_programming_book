@@ -1,0 +1,13 @@
+# _config.yml
+title: "CUDA Programming Book"
+description: "An interactive guide to mastering CUDA programming."
+baseurl: ""
+url: "https://aminsed.github.io/your-repo-name"
+
+# Exclude unnecessary files or directories
+exclude:
+  - "README.md"
+
+# Enable plugins (if needed)
+plugins:
+  - jekyll-feed

@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CUDA Programming Book</title>
+    <!-- Responsive Meta Tag -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Meta Description for SEO -->
+    <meta name="description" content="An interactive guide to mastering CUDA programming. Explore in-depth chapters, resources, and hands-on projects.">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Montserrat:wght@300;500&display=swap" rel="stylesheet">
+    <!-- AOS Animation Library CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" rel="stylesheet">
+    <!-- Prism.js CSS for Syntax Highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism-okaidia.min.css" rel="stylesheet">
+    <!-- Custom Styles -->
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #f9fafb; /* Light gray background */
+            position: relative;
+            scroll-behavior: smooth;
+            padding-top: 70px; /* Ensure content is not hidden behind navbar */
+            color: #1f2937; /* Dark gray text */
+        }
+        /* Navbar */
+        .navbar {
+            transition: background-color 0.3s, padding 0.3s;
+            padding: 20px 0;
+            background-color: #ffffff; /* Light background */
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        .navbar.scrolled {
+            background-color: #1f2937 !important; /* Dark gray when scrolled */
+            padding: 10px 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .navbar-brand {
+            font-family: 'Roboto', sans-serif;
+            font-weight: 700;
+            color: #4f46e5; /* Indigo color */
+        }
+        .navbar-light .navbar-nav .nav-link {
+            color: #374151; /* Gray text */
+        }
+        .navbar-light .navbar-nav .nav-link:hover {
+            color: #4f46e5; /* Indigo on hover */
+        }
+        /* Sidebar */
+        #sidebar {
+            top: 70px;
+            left: 0;
+            padding: 30px 20px;
+            background: #ffffff;
+            height: calc(100% - 70px);
+            overflow-y: auto;
+            position: fixed;
+            width: 300px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+            z-index: 1050;
+            color: #1f2937;
+        }
+        #sidebar.collapsed {
+            transform: translateX(-300px);
+        }
+        /* Toggle Button */
+        #sidebarToggle {
+            position: fixed;
+            top: 80px;
+            left: 310px;
+            background-color: #4f46e5; /* Indigo color */
+            color: white;
+            border: none;
+            border-radius: 0 5px 5px 0;
+            padding: 10px;
+            cursor: pointer;
+            transition: left 0.3s ease;
+            z-index: 1060;
+        }
+        #sidebar.collapsed + #sidebarToggle {
+            left: 10px;
+        }
+        #sidebarToggle.collapsed {
+            left: 10px;
+        }
+        /* Main Content */
+        #main-content {
+            margin-left: 320px;
+            padding: 60px 40px;
+            transition: margin-left 0.3s ease;
+        }
+        #main-content.expanded {
+            margin-left: 20px;
+        }
+        /* Adjust spacing between sections */
+        section {
+            margin-bottom: 60px;
+        }
+        /* Footer */
+        footer {
+            background-color: #1f2937; /* Dark gray */
+            color: white;
+            padding: 30px 0;
+        }
+        .footer-links a {
+            color: #6366f1; /* Light indigo */
+            margin: 0 10px;
+        }
+        /* Back to Top Button */
+        .back-to-top {
+            position: fixed;
+            bottom: 40px;
+            right: 40px;
+            display: none;
+            background-color: #4f46e5; /* Indigo color */
+            color: white;
+            border: none;
+            border-radius: 50%;
+            padding: 15px;
+            cursor: pointer;
+            z-index: 9999;
+        }
+        /* Tree View Styling */
+        .tree {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            color: inherit;
+        }
+        .tree ul {
+            list-style-type: none;
+            padding-left: 1em;
+            position: relative;
+        }
+        .tree ul ul {
+            margin-left: 0.5em; /* Adjust per your preference */
+        }
+        .tree li {
+            margin: 0;
+            padding: 0 0 1em 1em;
+            position: relative;
+        }
+        .tree li::before {
+            content: '';
+            position: absolute;
+            top: -0.5em;
+            left: -1em;
+            width: 1em;
+            height: 1em;
+            border-left: 1px solid #ccc;
+            border-bottom: 1px solid #ccc;
+            border-bottom-left-radius: 0.5em;
+        }
+        .tree li:last-child::before {
+            border-left: 1px solid #ccc;
+            border-bottom: none;
+            border-radius: 0 0 0 0.5em;
+        }
+        .tree li a {
+            color: inherit;
+            text-decoration: none;
+            position: relative;
+        }
+        .tree li a:hover {
+            color: #4f46e5; /* Indigo on hover */
+        }
+        .caret {
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+        }
+        .caret::before {
+            content: '\25BA';
+            color: #6b7280; /* Gray */
+            display: inline-block;
+            margin-right: 6px;
+            transition: transform 0.3s;
+        }
+        .caret-down::before {
+            transform: rotate(90deg);
+        }
+        .nested {
+            display: none;
+        }
+        .active {
+            display: block;
+        }
+        /* Code Styling */
+        pre, code {
+            font-family: 'Source Code Pro', monospace;
+        }
+        /* Dark Mode Styles */
+        body.dark-mode {
+            background-color: #1f2937; /* Dark gray background */
+            color: #f9fafb; /* Light gray text */
+        }
+        body.dark-mode a {
+            color: #93c5fd; /* Light blue links */
+        }
+        body.dark-mode .navbar, body.dark-mode footer {
+            background-color: #111827; /* Even darker background */
+        }
+        body.dark-mode .navbar-brand {
+            color: #bfdbfe; /* Lighter indigo */
+        }
+        body.dark-mode .navbar-light .navbar-nav .nav-link {
+            color: #d1d5db; /* Light gray text */
+        }
+        body.dark-mode .navbar-light .navbar-nav .nav-link:hover {
+            color: #93c5fd; /* Light blue on hover */
+        }
+        body.dark-mode .card {
+            background-color: #374151; /* Darker gray */
+            color: #f9fafb; /* Light text */
+        }
+        body.dark-mode #sidebar {
+            background-color: #1f2937; /* Dark gray */
+            color: #f9fafb; /* Light text */
+        }
+        body.dark-mode .tree li::before {
+            border-color: #4b5563; /* Adjusted line color */
+        }
+        body.dark-mode .caret::before {
+            color: #9ca3af; /* Gray */
+        }
+        body.dark-mode .tree li a {
+            color: #f9fafb; /* Light text for readability */
+        }
+        body.dark-mode .tree li a:hover {
+            color: #93c5fd; /* Light blue on hover */
+        }
+        body.dark-mode .footer-links a {
+            color: #93c5fd; /* Light blue links */
+        }
+        body.dark-mode .back-to-top {
+            background-color: #2563eb; /* Blue color */
+        }
+        /* End Dark Mode Styles */
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">CUDA Programming Book</a>
+            <!-- Dark Mode Toggle -->
+            <div class="form-check form-switch ms-auto me-3">
+                <input class="form-check-input" type="checkbox" id="darkModeToggle">
+                <label class="form-check-label" for="darkModeToggle"><i class="fas fa-moon"></i></label>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar Toggle Button -->
+    <button id="sidebarToggle" aria-label="Toggle Sidebar"><i class="fas fa-angle-left"></i></button>
+
+    <!-- Sidebar -->
+    <aside id="sidebar">
+        <h4 class="mb-4">Table of Contents</h4>
+        <ul class="tree">
+            <!-- Part 1 -->
+            <li>
+                <span class="caret caret-down">Part 1: Introduction to CUDA</span>
+                <ul class="nested active">
+                    <!-- Chapter 1 -->
+                    <li>
+                        <span class="caret">Chapter 1: Introduction to CUDA and GPU Computing</span>
+                        <ul class="nested">
+                            <li>
+                                <span class="caret">1.1 Discovering CUDA: Your Superpower for Computing</span>
+                                <ul class="nested">
+                                    <li><a href="#section1_1_1">1.1.1 What is CUDA and Why It Matters</a></li>
+                                    <li><a href="#section1_1_2">1.1.2 The Evolution of CUDA</a></li>
+                                </ul>
+                            </li>
+                            <li>
+                                <span class="caret">1.2 The GPU Unveiled: Understanding GPU Architecture</span>
+                                <ul class="nested">
+                                    <li><a href="#section1_2_1">1.2.1 Inside a GPU: The Basics</a></li>
+                                    <li><a href="#section1_2_2">1.2.2 GPU vs. CPU: A Comparative Look</a></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                    <!-- Chapter 2 -->
+                    <li>
+                        <span class="caret">Chapter 2: Writing and Running Your First CUDA Program</span>
+                        <ul class="nested">
+                            <li><a href="#section2_1">2.1 Your First CUDA Program: "Hello, CUDA!"</a></li>
+                            <li><a href="#section2_2">2.2 Basic CUDA Program Structure</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+            <!-- Add more parts and chapters as needed -->
+        </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main id="main-content">
+        <!-- Hero Section -->
+        <section id="introduction">
+            <div class="container hero-content text-center" data-aos="fade-up">
+                <h1 class="display-4">CUDA Programming Book</h1>
+                <p class="lead">An interactive guide to mastering CUDA programming.</p>
+                <a href="#contents" class="btn btn-primary btn-lg">Explore the Book</a>
+            </div>
+        </section>
+
+        <!-- Contents Section -->
+        <section id="contents">
+            <div class="container">
+                <h2 class="mt-5 mb-4" data-aos="fade-right">Contents</h2>
+                <!-- Example Chapter Card -->
+                <div class="card mb-4" data-aos="fade-up">
+                    <div class="card-body">
+                        <h3 class="card-title">Chapter 1: Introduction to CUDA and GPU Computing</h3>
+                        <p class="card-text">Begin your journey into CUDA programming by understanding the basics of GPU computing and setting up your development environment.</p>
+                        <a href="chapter1.html" class="btn btn-outline-primary">Read Chapter 1</a>
+                    </div>
+                </div>
+                <!-- Repeat for other chapters -->
+            </div>
+        </section>
+
+        <!-- Resources Section -->
+        <section id="resources">
+            <div class="container">
+                <h2 class="mt-5 mb-4" data-aos="fade-right"><i class="fas fa-tools"></i> Additional Resources</h2>
+                <ul class="list-group" data-aos="fade-up">
+                    <li class="list-group-item"><a href="https://developer.nvidia.com/cuda-zone" target="_blank">NVIDIA CUDA Zone</a></li>
+                    <li class="list-group-item"><a href="https://docs.nvidia.com/cuda/" target="_blank">CUDA Documentation</a></li>
+                    <!-- Add more resources as needed -->
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <!-- Back to Top Button -->
+    <button class="back-to-top" id="backToTopBtn" aria-label="Back to top"><i class="fas fa-chevron-up"></i></button>
+
+    <!-- Footer -->
+    <footer class="text-center">
+        <div class="container">
+            <p>© 2023 Your Name. All rights reserved.</p>
+            <div class="footer-links">
+                <a href="https://github.com/your-github-profile" target="_blank"><i class="fab fa-github fa-lg"></i></a>
+                <a href="mailto:your-email@example.com"><i class="fas fa-envelope fa-lg"></i></a>
+                <!-- Add more footer links if necessary -->
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- AOS Animation Library JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+    <!-- Prism.js JS for Syntax Highlighting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/prism.min.js"></script>
+    <!-- Custom Script -->
+    <script>
+        // Initialize AOS
+        AOS.init({
+            once: true,
+            duration: 800,
+        });
+
+        // Navbar Transition on Scroll
+        const navbar = document.querySelector('.navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        // Smooth Scrolling
+        document.querySelectorAll('a.nav-link, a.text-decoration-none, .tree a').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                if (this.getAttribute('href').startsWith('#')) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth',
+                        offsetTop: 100
+                    });
+                }
+            });
+        });
+
+        // Back to Top Button
+        const backToTopBtn = document.getElementById('backToTopBtn');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 500) {
+                backToTopBtn.style.display = 'block';
+            } else {
+                backToTopBtn.style.display = 'none';
+            }
+        });
+        backToTopBtn.addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+
+        // Dark Mode Toggle
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        darkModeToggle.addEventListener('change', () => {
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+        });
+        // Load Theme Preference
+        window.addEventListener('DOMContentLoaded', () => {
+            if (localStorage.getItem('darkMode') === 'true') {
+                document.body.classList.add('dark-mode');
+                darkModeToggle.checked = true;
+            }
+        });
+
+        // Tree View functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            var toggler = document.getElementsByClassName('caret');
+            for (var i = 0; i < toggler.length; i++) {
+                toggler[i].addEventListener('click', function() {
+                    this.parentElement.querySelector('.nested').classList.toggle('active');
+                    this.classList.toggle('caret-down');
+                });
+            }
+
+            // Initially collapse all except the first level
+            var nestedLists = document.querySelectorAll('.nested');
+            nestedLists.forEach(function(list) {
+                list.classList.remove('active');
+            });
+            var carets = document.querySelectorAll('.caret');
+            carets.forEach(function(caret) {
+                caret.classList.remove('caret-down');
+            });
+            // Expand the first level
+            var firstLevelNested = document.querySelector('.tree > li > .nested');
+            if (firstLevelNested) {
+                firstLevelNested.classList.add('active');
+                var firstCaret = document.querySelector('.tree > li > .caret');
+                if (firstCaret) {
+                    firstCaret.classList.add('caret-down');
+                }
+            }
+        });
+
+        // Sidebar Toggle Functionality
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const mainContent = document.getElementById('main-content');
+
+        sidebarToggle.addEventListener('click', function() {
+            sidebar.classList.toggle('collapsed');
+            sidebarToggle.classList.toggle('collapsed');
+            mainContent.classList.toggle('expanded');
+
+            // Change toggle button icon
+            const icon = sidebarToggle.querySelector('i');
+            if (sidebar.classList.contains('collapsed')) {
+                icon.classList.remove('fa-angle-left');
+                icon.classList.add('fa-angle-right');
+            } else {
+                icon.classList.remove('fa-angle-right');
+                icon.classList.add('fa-angle-left');
+            }
+        });
+
+        // Initialize Bootstrap ScrollSpy
+        if (mainContent) {
+            new bootstrap.ScrollSpy(document.body, {
+                target: '#sidebar',
+                offset: 100
+            });
+        }
+    </script>
+</body>
+</html>
